@@ -20,10 +20,7 @@ class EventLimiter
 
     public function goingTo($eventFingerprint)
     {
-        $eventsCount = $this->lastEventIsTooClose($eventFingerprint) ?
-            $this->eventsDone($eventFingerprint) : 0;
-
-        if ($eventsCount < $this->limit) {
+        if ($this->eventsDone($eventFingerprint) < $this->limit) {
             $this->registerEvent($eventFingerprint);
             return true;
         }
@@ -32,14 +29,23 @@ class EventLimiter
 
     private function lastEventIsTooClose($eventFingerprint)
     {
-        return $this->lastEventTime($eventFingerprint) + $this->timeSpan
+        $tooClose = $this->lastEventTime($eventFingerprint) + $this->timeSpan
             >= $this->currentTime();
+
+        if (!$tooClose) {
+            unlink($this->eventRegistryFile($eventFingerprint));
+        }
+
+        return $tooClose;
     }
 
     private function eventsDone($fingerprint)
     {
         $eventRegistryFile = $this->eventRegistryFile($fingerprint);
-        return is_file($eventRegistryFile) ? intval(file_get_contents($eventRegistryFile)) : 0;
+        return
+            is_file($eventRegistryFile)
+                && $this->lastEventIsTooClose($fingerprint) ?
+            intval(file_get_contents($eventRegistryFile)) : 0;
     }
 
     private function registerEvent($fingerprint)

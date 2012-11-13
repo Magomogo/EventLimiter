@@ -33,6 +33,16 @@ class EventLimiterTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(self::el($clock)->goingTo(self::$smsToMaxim));
     }
 
+    public function test_two_events_pause_another_two_events()
+    {
+        $clock = new TestClock();
+        $this->assertTrue(self::el($clock)->goingTo(self::$smsToMaxim));
+        $this->assertFalse(self::el($clock)->goingTo(self::$smsToMaxim));
+        $clock->timePassed(11);
+        $this->assertTrue(self::el($clock)->goingTo(self::$smsToMaxim));
+        $this->assertFalse(self::el($clock)->goingTo(self::$smsToMaxim));
+    }
+
     private static function el($clock = null)
     {
         return new EventLimiter(1, 10, vfsStream::url('eventsRegistry'), $clock);
