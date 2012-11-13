@@ -1,6 +1,7 @@
 <?php
 include __DIR__ . '/EventLimiter.php';
 include __DIR__ . '/vendor/autoload.php';
+include __DIR__ . '/TestClock.php';
 
 use org\bovigo\vfs\vfsStream;
 
@@ -24,9 +25,16 @@ class EventLimiterTest extends PHPUnit_Framework_TestCase
         $this->assertFalse(self::el()->goingTo(self::$smsToMaxim));
     }
 
-    private static function el()
+    public function test_second_event_is_allowed_in_11_seconds()
     {
-        return new EventLimiter(1, 10, vfsStream::url('eventsRegistry'));
+        $clock = new TestClock();
+        $this->assertTrue(self::el($clock)->goingTo(self::$smsToMaxim));
+        $clock->timePassed(11);
+        $this->assertTrue(self::el($clock)->goingTo(self::$smsToMaxim));
     }
 
+    private static function el($clock = null)
+    {
+        return new EventLimiter(1, 10, vfsStream::url('eventsRegistry'), $clock);
+    }
 }
